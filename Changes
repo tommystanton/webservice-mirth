@@ -1,0 +1,7 @@
+Revision history for {{$dist->name}}
+
+{{$NEXT}}
+
+  * 
+
+vim: syntax=:softtabstop=2:shiftwidth=2
