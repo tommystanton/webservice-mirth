@@ -9,6 +9,9 @@ use Test::Fake::HTTPD 0.06 ();
 use Class::Monkey qw( Test::Fake::HTTPD );
 
 use HTTP::Request::Params ();
+use Path::Class ();
+
+my $t_lib_dir = Path::Class::Dir->new('t/lib/mock_mirth/');
 
 # XXX Monkey patch for HTTPS certs/ location:
 # mostly copy and paste the original method :-/
@@ -17,11 +20,11 @@ override 'run' => sub {
     use Time::HiRes ();
     use Carp qw(croak);
 
-    my $cert_path = 't/lib/mock_mirth/certs';
+    my $cert_dir = $t_lib_dir->subdir('certs');
 
     my %certs_args = (
-        SSL_key_file  => "${cert_path}/server-key.pem",
-        SSL_cert_file => "${cert_path}/server-cert.pem",
+        SSL_key_file  => $cert_dir->file('server-key.pem')->stringify,
+        SSL_cert_file => $cert_dir->file('server-cert.pem')->stringify,
     );
 
     my ($self, $app) = @_;
