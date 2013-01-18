@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::XML;
 
 use Test::Fake::HTTPD 0.06 ();
 use Class::Monkey qw( Test::Fake::HTTPD );
@@ -81,6 +82,23 @@ $httpd->run( sub {
             [ 'true' ]
         ];
     }
+    elsif ( $params->{op} eq 'getChannel' ) {
+        my $foobar_xml = _get_channel_fixture('foobar');
+        my $quux_xml   = _get_channel_fixture('quux');
+
+        my $channels_xml = <<"END_XML";
+<list>
+$foobar_xml
+$quux_xml
+</list>
+END_XML
+
+        $response = [
+            200,
+            [ 'Content-Type' => 'application/xml' ],
+            [ $channels_xml ]
+        ];
+    }
     elsif ( $params->{op} eq 'logout' ) {
         $response = [ 200, [], [] ];
     }
@@ -102,6 +120,29 @@ my $mirth = $class->new(
 );
 
 ok $mirth->login,  'Login';
+
+foreach my $channel_name (qw( foobar quux ) ) {
+    my $channel = $mirth->get_channel($channel_name);
+
+    my $content = $channel->get_content;
+    is_xml(
+        $content, _get_channel_fixture($channel_name),
+        "$channel_name XML received is correct"
+    );
+}
+
 ok $mirth->logout, 'Logout';
+
+sub _get_channel_fixture {
+    my ($channel_to_get) = @_;
+
+    my $channels_dir = $t_lib_dir->subdir('channels');
+    my $channel      = $channels_dir->file("${channel_to_get}.xml");
+
+    my @lines = $channel->slurp;
+    my $channel_xml = join '', @lines;
+
+    return $channel_xml;
+}
 
 done_testing;

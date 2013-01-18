@@ -10,6 +10,8 @@ use Mojo::UserAgent ();
 
 use Log::Minimal qw( debugf croakff );
 
+use aliased 'WebService::Mirth::Channel' => 'Channel', ();
+
 has server => (
     is       => 'ro',
     isa      => 'Str',
@@ -110,6 +112,43 @@ Mirth Connect version 2.2.1.5861 will return:
     }
 
     $tx->success ? return 1 : return 0;
+}
+
+# (Content-Type will probably be application/xml;charset=UTF-8)
+sub get_channel {
+    my ( $self, $channel_name ) = @_;
+
+    my $url = $self->base_url->clone->path('/channels');
+
+    my $tx = $self->_ua->post_form( $url,
+        {   op      => 'getChannel',
+            channel => '<null/>',
+        }
+    );
+
+    if ( my $response = $tx->success ) {
+        # XXX Hack: Append XML declaration to ensure that XML semantics
+        # are turned on when the Mojo::DOM object is created (via
+        # Mojo::Message::dom())
+        my $body = $response->body;
+        $body = qq{<?xml version="1.0"?>\n$body};
+        $response->body($body);
+
+        my $channels = $response->dom;
+
+        my $channel_dom =
+            $channels->find('channel > name')
+                     ->first( sub { $_->text eq $channel_name } )
+                     ->parent;
+
+        my $channel = Channel->new( { channel_dom => $channel_dom } );
+
+        return $channel;
+    }
+    else {
+        my ( $message, $code ) = $tx->error;
+        croakff( 'Failed with HTTP code %s: %s', $code, $message );
+    }
 }
 
 sub logout {
