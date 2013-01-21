@@ -112,7 +112,7 @@ my $class = 'WebService::Mirth';
 use_ok($class);
 
 my $mirth = $class->new(
-    server   => 'localhost.localdomain',
+    server   => '127.0.0.1', # XXX FQDN needed for cookies to work
     port     => $httpd->port,
     version  => '42',
     username => 'admin',
