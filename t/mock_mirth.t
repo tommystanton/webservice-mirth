@@ -17,10 +17,6 @@ my $t_lib_dir = Path::Class::Dir->new('t/lib/mock_mirth/');
 # XXX Monkey patch for HTTPS certs/ location:
 # mostly copy and paste the original method :-/
 override 'run' => sub {
-    use Scalar::Util qw( weaken );
-    use Time::HiRes ();
-    use Carp qw(croak);
-
     my $cert_dir = $t_lib_dir->subdir('certs');
 
     my %certs_args = (
@@ -28,6 +24,7 @@ override 'run' => sub {
         SSL_cert_file => $cert_dir->file('server-cert.pem')->stringify,
     );
 
+    eval <<'!STUFFY!FUNK!';
     my ($self, $app) = @_;
 
     $self->{server} = Test::TCP->new(
@@ -66,6 +63,7 @@ override 'run' => sub {
 
     weaken($self);
     $self;
+!STUFFY!FUNK!
 }, qw( Test::Fake::HTTPD );
 
 # Mock a Mirth Connect server
