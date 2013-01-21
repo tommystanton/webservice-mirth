@@ -111,9 +111,10 @@ ok( defined $httpd, 'Got a test HTTP server (HTTPS)' );
 my $class = 'WebService::Mirth';
 use_ok($class);
 
+my ( $server, $port ) = split /:/, $httpd->host_port;
 my $mirth = $class->new(
-    server   => '127.0.0.1', # XXX FQDN needed for cookies to work
-    port     => $httpd->port,
+    server   => $server, # XXX FQDN needed for cookies to work
+    port     => $port,
     version  => '42',
     username => 'admin',
     password => 'admin',
