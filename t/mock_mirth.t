@@ -6,6 +6,7 @@ use warnings;
 use Test::More;
 use Test::XML;
 use Test::Warn;
+use Test::Fatal;
 
 use Test::Fake::HTTPD 0.06 ();
 use Class::Monkey qw( Test::Fake::HTTPD );
@@ -74,12 +75,24 @@ $httpd->run( sub {
 
     my $response;
     if ( $params->{op} eq 'login' ) {
+        my ( $username, $password )
+            = map { $params->{$_} } qw( username password );
+
+        my $is_auth =
+            $username eq 'admin' && $password eq 'admin' ? 1 : 0;
+
         # TODO Return a cookie
-        $response = [
-            200,
-            [ 'Content-Type' => 'text/plain' ],
-            [ 'true' ]
-        ];
+
+        if ($is_auth) {
+            $response = [
+                200,
+                [ 'Content-Type' => 'text/plain' ],
+                [ 'true' ]
+            ];
+        }
+        else {
+            $response = [ 500, [], [] ];
+        }
     }
     elsif ( $params->{op} eq 'getChannel' ) {
         my $foobar_xml = _get_channel_fixture('foobar');
@@ -111,6 +124,23 @@ my $class = 'WebService::Mirth';
 use_ok($class);
 
 my ( $server, $port ) = split /:/, $httpd->host_port;
+
+{
+    my $mirth = $class->new(
+        server   => $server,
+        port     => $port,
+        version  => '42',
+        username => 'admin',
+        password => 'incorrect',
+    );
+
+    like(
+        exception { $mirth->login; },
+        qr/login failed/i,
+        'Login with bad credentials causes exception'
+    );
+}
+
 my $mirth = $class->new(
     server   => $server, # XXX FQDN needed for cookies to work
     port     => $port,
@@ -119,7 +149,7 @@ my $mirth = $class->new(
     password => 'admin',
 );
 
-ok $mirth->login,  'Login';
+ok $mirth->login, 'Login with good credentials';
 
 {
     my $channel;
