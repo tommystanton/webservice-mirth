@@ -120,7 +120,9 @@ my $mirth = $class->new(
 
 ok $mirth->login,  'Login';
 
-foreach my $channel_name (qw( foobar quux ) ) {
+{
+    my $channel_name = 'quux';
+
     my $channel = $mirth->get_channel($channel_name);
 
     my $content = $channel->get_content;
