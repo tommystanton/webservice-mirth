@@ -5,6 +5,7 @@ use warnings;
 
 use Test::More;
 use Test::XML;
+use Test::Warn;
 
 use Test::Fake::HTTPD 0.06 ();
 use Class::Monkey qw( Test::Fake::HTTPD );
@@ -121,9 +122,21 @@ my $mirth = $class->new(
 ok $mirth->login,  'Login';
 
 {
+    my $channel;
+
+    warning_like
+        { $channel = $mirth->get_channel('baz'); }
+        qr/does not exist/,
+        'Got warning about invalid channel not existing';
+
+    ok( ! defined $channel, 'undef returned for invalid channel' );
+}
+
+{
     my $name = 'quux';
 
     my $channel = $mirth->get_channel($name);
+    ok( defined $channel, 'Got a value for a valid channel' );
 
     my $content = $channel->get_content;
     is_xml(
