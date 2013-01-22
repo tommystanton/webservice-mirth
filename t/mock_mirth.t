@@ -121,14 +121,14 @@ my $mirth = $class->new(
 ok $mirth->login,  'Login';
 
 {
-    my $channel_name = 'quux';
+    my $name = 'quux';
 
-    my $channel = $mirth->get_channel($channel_name);
+    my $channel = $mirth->get_channel($name);
 
     my $content = $channel->get_content;
     is_xml(
-        $content, _get_channel_fixture($channel_name),
-        "$channel_name XML received is correct"
+        $content, _get_channel_fixture($name),
+        "XML received for $name is correct"
     );
 }
 
