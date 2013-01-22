@@ -8,7 +8,7 @@ use namespace::autoclean;
 use Mojo::URL ();
 use Mojo::UserAgent ();
 
-use Log::Minimal qw( debugf croakff );
+use Log::Minimal qw( debugf warnf croakff );
 
 use aliased 'WebService::Mirth::Channel' => 'Channel', ();
 
@@ -136,10 +136,18 @@ sub get_channel {
 
         my $channels = $response->dom;
 
-        my $channel_dom =
+        my $channel_name_dom =
             $channels->find('channel > name')
-                     ->first( sub { $_->text eq $channel_name } )
-                     ->parent;
+                     ->first( sub { $_->text eq $channel_name } );
+
+        my $channel_dom;
+        if ( defined $channel_name_dom ) {
+            $channel_dom = $channel_name_dom->parent;
+        }
+        else {
+            warnf( 'Channel "%s" does not exist', $channel_name );
+            return undef;
+        }
 
         my $channel = Channel->new( { channel_dom => $channel_dom } );
 
