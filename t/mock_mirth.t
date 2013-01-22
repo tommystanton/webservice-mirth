@@ -134,9 +134,13 @@ ok $mirth->login,  'Login';
 
 {
     my $name = 'quux';
+    my $id   = 'dc444818-9b64-42db-9d59-3d478c9ea3ef';
 
     my $channel = $mirth->get_channel($name);
     ok( defined $channel, 'Got a value for a valid channel' );
+
+    is $channel->name, $name, 'Parsed name is correct';
+    is $channel->id,   $id,   'Parsed ID is correct';
 
     my $content = $channel->get_content;
     is_xml(

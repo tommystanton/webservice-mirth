@@ -13,6 +13,20 @@ has channel_dom => (
     required => 1,
 );
 
+has name => (
+    is      => 'ro',
+    isa     => 'Str',
+    lazy    => 1,
+    default => sub { $_[0]->channel_dom->at('name')->text },
+);
+
+has id => (
+    is      => 'ro',
+    isa     => 'Str',
+    lazy    => 1,
+    default => sub { $_[0]->channel_dom->at('id')->text },
+);
+
 sub get_content {
     my ($self) = @_;
 
