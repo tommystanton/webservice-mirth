@@ -136,7 +136,7 @@ my ( $server, $port ) = split /:/, $httpd->host_port;
 
     like(
         exception { $mirth->login; },
-        qr/login failed/i,
+        qr/failed.*?HTTP.*?500/i,
         'Login with bad credentials causes exception'
     );
 }

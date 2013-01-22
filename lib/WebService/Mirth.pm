@@ -107,8 +107,7 @@ Mirth Connect version 2.2.1.5861 will return:
     if ( my $response = $tx->success ) {
     }
     else {
-        my ( $message, $code ) = $tx->error;
-        croakff( 'Login failed with HTTP code %s: %s', $code, $message );
+        _handle_tx_error( [ $tx->error ] );
     }
 
     $tx->success ? return 1 : return 0;
@@ -171,8 +170,7 @@ containing "quux", then get its parent (the channel node):
         return $channel;
     }
     else {
-        my ( $message, $code ) = $tx->error;
-        croakff( 'Failed with HTTP code %s: %s', $code, $message );
+        _handle_tx_error( [ $tx->error ] );
     }
 }
 
@@ -187,11 +185,15 @@ sub logout {
     if ( my $response = $tx->success ) {
     }
     else {
-        my ( $message, $code ) = $tx->error;
-        croakff( 'Logout failed with HTTP code %s: %s', $code, $message );
+        _handle_tx_error( [ $tx->error ] );
     }
 
     $tx->success ? return 1 : return 0;
+}
+
+sub _handle_tx_error {
+    my ( $message, $code ) = @{ $_[0] };
+    croakff( 'Failed with HTTP code %s: %s', $code, $message );
 }
 
 __PACKAGE__->meta->make_immutable;
