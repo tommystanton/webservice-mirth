@@ -136,6 +136,23 @@ sub get_channel {
 
         my $channels = $response->dom;
 
+=begin comment
+
+Find the "name" node of the channel desired, then get its parent
+("channel").  To find a channel named "quux", find the name node
+containing "quux", then get its parent (the channel node):
+
+  <channel>
+      <id>dc444818-9b64-42db-9d59-3d478c9ea3ef</id>
+      <name>quux</name>
+      <description>This channel feeds.</description>
+  ...
+  </channel>
+
+=end comment
+
+=cut
+
         my $channel_name_dom =
             $channels->find('channel > name')
                      ->first( sub { $_->text eq $channel_name } );
