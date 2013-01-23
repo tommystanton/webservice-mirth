@@ -5,9 +5,12 @@ package WebService::Mirth;
 use Moose;
 use namespace::autoclean;
 
+use MooseX::Params::Validate qw( validated_list );
+
 use Mojo::URL ();
 use Mojo::UserAgent ();
 
+use Path::Class ();
 use Log::Minimal qw( debugf warnf croakff );
 
 use aliased 'WebService::Mirth::Channel' => 'Channel', ();
@@ -86,6 +89,7 @@ sub _build_channels_dom {
         }
     );
 
+    # (Content-Type will probably be application/xml;charset=UTF-8)
     if ( my $response = $tx->success ) {
         # XXX Hack: Append XML declaration to ensure that XML semantics
         # are turned on when the Mojo::DOM object is created (via
@@ -101,6 +105,31 @@ sub _build_channels_dom {
     else {
         _handle_tx_error( [ $tx->error ] );
     }
+}
+
+has channel_list => (
+    is         => 'ro',
+    isa        => 'HashRef',
+    lazy_build => 1,
+);
+
+sub _build_channel_list {
+    my ($self) = @_;
+
+    my @channel_names = @{
+        $self->channels_dom->find( 'channel > name' )
+                           ->map ( sub { $_->text } )
+    };
+
+    my %channel_list;
+    foreach my $name (@channel_names) {
+        my $channel = $self->get_channel($name);
+        my $id      = $channel->id;
+
+        $channel_list{$name} = $id;
+    }
+
+    return \%channel_list;
 }
 
 sub login {
@@ -147,8 +176,21 @@ Mirth Connect version 2.2.1.5861 will return:
     $tx->success ? return 1 : return 0;
 }
 
-# (Content-Type will probably be application/xml;charset=UTF-8)
 sub get_channel {
+    my ( $self, $channel_name ) = @_;
+
+    my $channel_dom = $self->_get_channel_dom($channel_name);
+
+    if ( not defined $channel_dom ) {
+        return undef;
+    }
+
+    my $channel = Channel->new( { channel_dom => $channel_dom } );
+
+    return $channel;
+}
+
+sub _get_channel_dom {
     my ( $self, $channel_name ) = @_;
 
 =begin comment
@@ -168,23 +210,46 @@ containing "quux", then get its parent (the channel node):
 
 =cut
 
-   my $channel_name_dom =
-       $self->channels_dom
-            ->find('channel > name')
-            ->first( sub { $_->text eq $channel_name } );
+    my $channel_name_dom =
+        $self->channels_dom
+             ->find ( 'channel > name' )
+             ->first( sub { $_->text eq $channel_name } );
 
-   my $channel_dom;
-   if ( defined $channel_name_dom ) {
-       $channel_dom = $channel_name_dom->parent;
-   }
-   else {
-       warnf( 'Channel "%s" does not exist', $channel_name );
-       return undef;
-   }
+    my $channel_dom;
+    if ( defined $channel_name_dom ) {
+        $channel_dom = $channel_name_dom->parent;
+    }
+    else {
+        warnf( 'Channel "%s" does not exist', $channel_name );
+        return undef;
+    }
 
-   my $channel = Channel->new( { channel_dom => $channel_dom } );
+    return $channel_dom;
+}
 
-   return $channel;
+sub export_channels {
+    my $self = shift;
+    my ($to_dir) = validated_list(
+        \@_,
+        to_dir => { isa => 'Str' },
+    );
+
+    my $output_dir = Path::Class::Dir->new($to_dir);
+
+    foreach my $channel_name ( sort keys %{ $self->channel_list } ) {
+        my $channel = $self->get_channel($channel_name);
+
+        my $filename = sprintf '%s.xml', $channel->name;
+        my $output_file = $output_dir->file($filename);
+
+        my $content = $channel->get_content;
+
+        debugf(
+            'Exporting "%s" channel: %s',
+            $channel->name, $output_file->stringify
+        );
+        $output_file->spew($content);
+    }
 }
 
 sub logout {

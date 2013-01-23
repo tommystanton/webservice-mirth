@@ -7,12 +7,15 @@ use Test::More;
 use Test::XML;
 use Test::Warn;
 use Test::Fatal;
+use Test::Deep;
+use Test::File;
 
 use Test::Fake::HTTPD 0.06 ();
 use Class::Monkey qw( Test::Fake::HTTPD );
 
 use HTTP::Request::Params ();
 use Path::Class ();
+use File::Temp ();
 
 my $t_lib_dir = Path::Class::Dir->new('t/lib/mock_mirth/');
 
@@ -80,7 +83,62 @@ ok $mirth->login, 'Login with good credentials';
     );
 }
 
+{
+    my $channels = {
+        foobar => 'a25ea24c-d8f4-439a-9063-62f8a2b6a4b1',
+        quux   => 'dc444818-9b64-42db-9d59-3d478c9ea3ef',
+    };
+
+    cmp_deeply(
+        $mirth->channel_list,
+        $channels,
+        'List of channels is correct'
+    );
+}
+
+{
+    my $export_dir =
+        File::Temp->newdir(
+            $t_lib_dir->subdir('export.XXXX')->stringify
+        );
+
+    $mirth->export_channels({
+        to_dir => $export_dir . '',
+    });
+
+    foreach my $channel_name ( qw( foobar quux ) ) {
+        file_not_empty_ok(
+            "${export_dir}/${channel_name}.xml",
+            "$channel_name channel has been exported"
+        );
+
+        my $xml_content = _get_channel_exported({
+            channel    => $channel_name,
+            export_dir => $export_dir . '',
+        });
+
+        is_xml(
+            $xml_content, _get_channel_fixture($channel_name),
+            "XML file exported for $channel_name is correct"
+        );
+    }
+}
+
 ok $mirth->logout, 'Logout';
+
+sub _get_channel_exported {
+    my ($args)         = @_;
+    my $channel_to_get = $args->{channel};
+    my $export_dir     = $args->{export_dir};
+
+    $export_dir = Path::Class::Dir->new($export_dir);
+    my $channel = $export_dir->file("${channel_to_get}.xml");
+
+    my @lines = $channel->slurp;
+    my $channel_xml = join '', @lines;
+
+    return $channel_xml;
+}
 
 sub _get_channel_fixture {
     my ($channel_to_get) = @_;
