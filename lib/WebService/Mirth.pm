@@ -69,6 +69,40 @@ has _ua => (
     default => sub { Mojo::UserAgent->new },
 );
 
+has channels_dom => (
+    is         => 'ro',
+    isa        => 'Mojo::DOM',
+    lazy_build => 1,
+);
+
+sub _build_channels_dom {
+    my ($self) = @_;
+
+    my $url = $self->base_url->clone->path('/channels');
+
+    my $tx = $self->_ua->post_form( $url,
+        {   op      => 'getChannel',
+            channel => '<null/>',
+        }
+    );
+
+    if ( my $response = $tx->success ) {
+        # XXX Hack: Append XML declaration to ensure that XML semantics
+        # are turned on when the Mojo::DOM object is created (via
+        # Mojo::Message::dom())
+        my $body = $response->body;
+        $body = qq{<?xml version="1.0"?>\n$body};
+        $response->body($body);
+
+        my $channels_dom = $response->dom;
+
+        return $channels_dom;
+    }
+    else {
+        _handle_tx_error( [ $tx->error ] );
+    }
+}
+
 sub login {
     my ($self) = @_;
 
@@ -117,24 +151,6 @@ Mirth Connect version 2.2.1.5861 will return:
 sub get_channel {
     my ( $self, $channel_name ) = @_;
 
-    my $url = $self->base_url->clone->path('/channels');
-
-    my $tx = $self->_ua->post_form( $url,
-        {   op      => 'getChannel',
-            channel => '<null/>',
-        }
-    );
-
-    if ( my $response = $tx->success ) {
-        # XXX Hack: Append XML declaration to ensure that XML semantics
-        # are turned on when the Mojo::DOM object is created (via
-        # Mojo::Message::dom())
-        my $body = $response->body;
-        $body = qq{<?xml version="1.0"?>\n$body};
-        $response->body($body);
-
-        my $channels = $response->dom;
-
 =begin comment
 
 Find the "name" node of the channel desired, then get its parent
@@ -152,26 +168,23 @@ containing "quux", then get its parent (the channel node):
 
 =cut
 
-        my $channel_name_dom =
-            $channels->find('channel > name')
-                     ->first( sub { $_->text eq $channel_name } );
+   my $channel_name_dom =
+       $self->channels_dom
+            ->find('channel > name')
+            ->first( sub { $_->text eq $channel_name } );
 
-        my $channel_dom;
-        if ( defined $channel_name_dom ) {
-            $channel_dom = $channel_name_dom->parent;
-        }
-        else {
-            warnf( 'Channel "%s" does not exist', $channel_name );
-            return undef;
-        }
+   my $channel_dom;
+   if ( defined $channel_name_dom ) {
+       $channel_dom = $channel_name_dom->parent;
+   }
+   else {
+       warnf( 'Channel "%s" does not exist', $channel_name );
+       return undef;
+   }
 
-        my $channel = Channel->new( { channel_dom => $channel_dom } );
+   my $channel = Channel->new( { channel_dom => $channel_dom } );
 
-        return $channel;
-    }
-    else {
-        _handle_tx_error( [ $tx->error ] );
-    }
+   return $channel;
 }
 
 sub logout {
