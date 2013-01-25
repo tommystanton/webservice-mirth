@@ -16,6 +16,29 @@ use Log::Minimal qw( debugf warnf croakff );
 
 use aliased 'WebService::Mirth::Channel' => 'Channel', ();
 
+=begin comment
+
+API was construed from reading the source code at:
+https://svn.mirthcorp.com/connect/tags/2.1.1/server/src/com/mirth/connect/
+
+Java classes studied:
+
+- server/src/com/mirth/connect/client/core/Operations.java
+- server/src/com/mirth/connect/client/core/Client.java
+- command/src/com/mirth/connect/cli/CommandLineInterface.java
+- server/src/com/mirth/connect/client/core/ServerConnection.java
+- server/src/com/mirth/connect/client/core/ServerConnectionFactory.java
+- server/src/com/mirth/connect/model/converters/ObjectXMLSerializer.java
+- server/src/com/mirth/connect/model/Channel.java
+- command/src/com/mirth/connect/cli/Token.java
+
+Documentation on "Mirth Shell" is at:
+http://www.mirthcorp.com/community/wiki/display/mirthuserguidev1r8p0/Mirth+Shell
+
+=end comment
+
+=cut
+
 has server => (
     is       => 'ro',
     isa      => 'Str',
