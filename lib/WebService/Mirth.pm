@@ -5,6 +5,7 @@ package WebService::Mirth;
 use Moose;
 use namespace::autoclean;
 
+use MooseX::Types::Path::Class::MoreCoercions qw( Dir );
 use MooseX::Params::Validate qw( validated_list );
 
 use Mojo::URL ();
@@ -229,12 +230,10 @@ containing "quux", then get its parent (the channel node):
 
 sub export_channels {
     my $self = shift;
-    my ($to_dir) = validated_list(
+    my ($output_dir) = validated_list(
         \@_,
-        to_dir => { isa => 'Str' },
+        to_dir => { isa => Dir, coerce => 1 },
     );
-
-    my $output_dir = Path::Class::Dir->new($to_dir);
 
     foreach my $channel_name ( sort keys %{ $self->channel_list } ) {
         my $channel = $self->get_channel($channel_name);
