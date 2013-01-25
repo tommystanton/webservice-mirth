@@ -33,7 +33,6 @@ my ( $server, $port ) = split /:/, $httpd->host_port;
     my $mirth = $class->new(
         server   => $server,
         port     => $port,
-        version  => '42',
         username => 'admin',
         password => 'incorrect',
     );
@@ -48,7 +47,6 @@ my ( $server, $port ) = split /:/, $httpd->host_port;
 my $mirth = $class->new(
     server   => $server, # XXX FQDN needed for cookies to work
     port     => $port,
-    version  => '42',
     username => 'admin',
     password => 'admin',
 );

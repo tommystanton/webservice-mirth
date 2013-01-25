@@ -33,6 +33,7 @@ has port => (
 has version => (
     is       => 'ro',
     isa      => 'Str',
+    default  => '0.0.0', # "Use 0.0.0 to ignore this property."
     required => 1,
 );
 
