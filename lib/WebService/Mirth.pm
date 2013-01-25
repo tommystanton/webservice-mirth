@@ -14,7 +14,8 @@ use Mojo::UserAgent ();
 use Path::Class ();
 use Log::Minimal qw( debugf warnf croakff );
 
-use aliased 'WebService::Mirth::Channel' => 'Channel', ();
+use aliased 'WebService::Mirth::GlobalScripts' => 'GlobalScripts', ();
+use aliased 'WebService::Mirth::Channel'       => 'Channel',       ();
 
 =begin comment
 
@@ -96,6 +97,37 @@ has _ua => (
     lazy    => 1,
     default => sub { Mojo::UserAgent->new },
 );
+
+has global_scripts_dom => (
+    is         => 'ro',
+    isa        => 'Mojo::DOM',
+    lazy_build => 1,
+);
+
+sub _build_global_scripts_dom {
+    my ($self) = @_;
+
+    my $url = $self->base_url->clone->path('/configuration');
+
+    my $tx = $self->_ua->post_form( $url, { op => 'getGlobalScripts' } );
+
+    # (Content-Type will probably be application/xml;charset=UTF-8)
+    if ( my $response = $tx->success ) {
+        # XXX Hack: Append XML declaration to ensure that XML semantics
+        # are turned on when the Mojo::DOM object is created (via
+        # Mojo::Message::dom())
+        my $body = $response->body;
+        $body = qq{<?xml version="1.0"?>\n$body};
+        $response->body($body);
+
+        my $global_scripts_dom = $response->dom;
+
+        return $global_scripts_dom;
+    }
+    else {
+        _handle_tx_error( [ $tx->error ] );
+    }
+}
 
 has channels_dom => (
     is         => 'ro',
@@ -199,6 +231,16 @@ Mirth Connect version 2.2.1.5861 will return:
     }
 
     $tx->success ? return 1 : return 0;
+}
+
+sub get_global_scripts {
+    my ( $self, $channel_name ) = @_;
+
+    my $global_scripts = GlobalScripts->new({
+        global_scripts_dom => $self->global_scripts_dom
+    });
+
+    return $global_scripts;
 }
 
 sub get_channel {

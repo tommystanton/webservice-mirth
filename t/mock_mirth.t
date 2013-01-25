@@ -54,6 +54,16 @@ my $mirth = $class->new(
 ok $mirth->login, 'Login with good credentials';
 
 {
+    my $global_scripts = $mirth->get_global_scripts;
+
+    my $content = $global_scripts->get_content;
+    is_xml(
+        $content, _get_global_scripts_fixture(),
+        "XML received for global scripts is correct"
+    );
+}
+
+{
     my $channel;
 
     warning_like
@@ -123,6 +133,15 @@ ok $mirth->login, 'Login with good credentials';
 }
 
 ok $mirth->logout, 'Logout';
+
+sub _get_global_scripts_fixture {
+    my $global_scripts = $t_lib_dir->file("global_scripts.xml");
+
+    my @lines = $global_scripts->slurp;
+    my $global_scripts_xml = join '', @lines;
+
+    return $global_scripts_xml;
+}
 
 sub _get_channel_exported {
     my ($args)         = @_;
@@ -232,6 +251,15 @@ sub _get_httpd {
             else {
                 $response = [ 500, [], [] ];
             }
+        }
+        elsif ( $params->{op} eq 'getGlobalScripts' ) {
+            my $global_scripts_xml = _get_global_scripts_fixture();
+
+            $response = [
+                200,
+                [ 'Content-Type' => 'application/xml' ],
+                [ $global_scripts_xml ]
+            ];
         }
         elsif ( $params->{op} eq 'getChannel' ) {
             my $foobar_xml = _get_channel_fixture('foobar');
