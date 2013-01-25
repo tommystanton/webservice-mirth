@@ -234,13 +234,34 @@ Mirth Connect version 2.2.1.5861 will return:
 }
 
 sub get_global_scripts {
-    my ( $self, $channel_name ) = @_;
+    my ($self) = @_;
 
     my $global_scripts = GlobalScripts->new({
         global_scripts_dom => $self->global_scripts_dom
     });
 
     return $global_scripts;
+}
+
+sub export_global_scripts {
+    my $self = shift;
+    my ($output_dir) = validated_list(
+        \@_,
+        to_dir => { isa => Dir, coerce => 1 },
+    );
+
+    my $global_scripts = $self->get_global_scripts;
+
+    my $filename = 'global_scripts.xml';
+    my $output_file = $output_dir->file($filename);
+
+    my $content = $global_scripts->get_content;
+
+    debugf(
+        'Exporting global scripts: %s',
+        $output_file->stringify
+    );
+    $output_file->spew($content);
 }
 
 sub get_channel {

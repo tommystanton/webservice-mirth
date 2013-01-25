@@ -110,29 +110,63 @@ ok $mirth->login, 'Login with good credentials';
             $t_lib_dir->subdir('export.XXXX')->stringify
         );
 
-    $mirth->export_channels({
-        to_dir => $export_dir . '',
-    });
-
-    foreach my $channel_name ( qw( foobar quux ) ) {
-        file_not_empty_ok(
-            "${export_dir}/${channel_name}.xml",
-            "$channel_name channel has been exported"
-        );
-
-        my $xml_content = _get_channel_exported({
-            channel    => $channel_name,
-            export_dir => $export_dir . '',
+    {
+        $mirth->export_global_scripts({
+            to_dir => $export_dir . '',
         });
 
-        is_xml(
-            $xml_content, _get_channel_fixture($channel_name),
-            "XML file exported for $channel_name is correct"
-        );
+       file_not_empty_ok(
+           "${export_dir}/global_scripts.xml",
+           "Global scripts have been exported"
+       );
+
+       my $xml_content = _get_global_scripts_exported({
+           export_dir => $export_dir . '',
+       });
+
+       is_xml(
+           $xml_content, _get_global_scripts_fixture(),
+           "XML file exported for global scripts is correct"
+       );
+    }
+    {
+        $mirth->export_channels({
+            to_dir => $export_dir . '',
+        });
+
+        foreach my $channel_name ( qw( foobar quux ) ) {
+            file_not_empty_ok(
+                "${export_dir}/${channel_name}.xml",
+                "$channel_name channel has been exported"
+            );
+
+            my $xml_content = _get_channel_exported({
+                channel    => $channel_name,
+                export_dir => $export_dir . '',
+            });
+
+            is_xml(
+                $xml_content, _get_channel_fixture($channel_name),
+                "XML file exported for $channel_name is correct"
+            );
+        }
     }
 }
 
 ok $mirth->logout, 'Logout';
+
+sub _get_global_scripts_exported {
+    my ($args) = @_;
+    my $export_dir = $args->{export_dir};
+
+    $export_dir = Path::Class::Dir->new($export_dir);
+    my $global_scripts = $export_dir->file('global_scripts.xml');
+
+    my @lines = $global_scripts->slurp;
+    my $global_scripts_xml = join '', @lines;
+
+    return $global_scripts_xml;
+}
 
 sub _get_global_scripts_fixture {
     my $global_scripts = $t_lib_dir->file("global_scripts.xml");
