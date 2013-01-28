@@ -193,7 +193,12 @@ sub logout {
 
 sub _handle_tx_error {
     my ( $message, $code ) = @{ $_[0] };
-    croakff( 'Failed with HTTP code %s: %s', $code, $message );
+
+    croakff(
+        'Failed with HTTP code %s: %s',
+        $code || 'N/A',
+        $message
+    );
 }
 
 __PACKAGE__->meta->make_immutable;
