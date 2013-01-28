@@ -118,12 +118,7 @@ sub _build_code_templates_dom {
 
     # (Content-Type will probably be application/xml;charset=UTF-8)
     if ( my $response = $tx->success ) {
-        # XXX Hack: Append XML declaration to ensure that XML semantics
-        # are turned on when the Mojo::DOM object is created (via
-        # Mojo::Message::dom())
-        my $body = $response->body;
-        $body = qq{<?xml version="1.0"?>\n$body};
-        $response->body($body);
+        _fix_response_body_xml($response);
 
         my $code_templates_dom = $response->dom;
 
@@ -149,12 +144,7 @@ sub _build_global_scripts_dom {
 
     # (Content-Type will probably be application/xml;charset=UTF-8)
     if ( my $response = $tx->success ) {
-        # XXX Hack: Append XML declaration to ensure that XML semantics
-        # are turned on when the Mojo::DOM object is created (via
-        # Mojo::Message::dom())
-        my $body = $response->body;
-        $body = qq{<?xml version="1.0"?>\n$body};
-        $response->body($body);
+        _fix_response_body_xml($response);
 
         my $global_scripts_dom = $response->dom;
 
@@ -184,12 +174,7 @@ sub _build_channels_dom {
 
     # (Content-Type will probably be application/xml;charset=UTF-8)
     if ( my $response = $tx->success ) {
-        # XXX Hack: Append XML declaration to ensure that XML semantics
-        # are turned on when the Mojo::DOM object is created (via
-        # Mojo::Message::dom())
-        my $body = $response->body;
-        $body = qq{<?xml version="1.0"?>\n$body};
-        $response->body($body);
+        _fix_response_body_xml($response);
 
         my $channels_dom = $response->dom;
 
@@ -430,6 +415,17 @@ sub _handle_tx_error {
         $code || 'N/A',
         $message
     );
+}
+
+sub _fix_response_body_xml {
+    my ($response) = @_;
+
+    # XXX Hack: Append XML declaration to ensure that XML semantics
+    # are turned on when the Mojo::DOM object is created (via
+    # Mojo::Message::dom())
+    my $body = $response->body;
+    $body = qq{<?xml version="1.0"?>\n$body};
+    $response->body($body);
 }
 
 __PACKAGE__->meta->make_immutable;
