@@ -140,6 +140,25 @@ ok $mirth->login, 'Login with good credentials';
        );
     }
     {
+        $mirth->export_code_templates({
+            to_dir => $export_dir . '',
+        });
+
+       file_not_empty_ok(
+           "${export_dir}/code_templates.xml",
+           "Code templates have been exported"
+       );
+
+       my $xml_content = _get_code_templates_exported({
+           export_dir => $export_dir . '',
+       });
+
+       is_xml(
+           $xml_content, _get_code_templates_fixture(),
+           "XML file exported for code templates is correct"
+       );
+    }
+    {
         $mirth->export_channels({
             to_dir => $export_dir . '',
         });
@@ -185,6 +204,19 @@ sub _get_global_scripts_fixture {
     my $global_scripts_xml = join '', @lines;
 
     return $global_scripts_xml;
+}
+
+sub _get_code_templates_exported {
+    my ($args) = @_;
+    my $export_dir = $args->{export_dir};
+
+    $export_dir = Path::Class::Dir->new($export_dir);
+    my $code_templates = $export_dir->file('code_templates.xml');
+
+    my @lines = $code_templates->slurp;
+    my $code_templates_xml = join '', @lines;
+
+    return $code_templates_xml;
 }
 
 sub _get_code_templates_fixture {

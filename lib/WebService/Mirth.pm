@@ -310,6 +310,27 @@ sub get_code_templates {
     return $code_templates;
 }
 
+sub export_code_templates {
+    my $self = shift;
+    my ($output_dir) = validated_list(
+        \@_,
+        to_dir => { isa => Dir, coerce => 1 },
+    );
+
+    my $code_templates = $self->get_code_templates;
+
+    my $filename = 'code_templates.xml';
+    my $output_file = $output_dir->file($filename);
+
+    my $content = $code_templates->get_content;
+
+    debugf(
+        'Exporting code templates: %s',
+        $output_file->stringify
+    );
+    $output_file->spew($content);
+}
+
 sub get_channel {
     my ( $self, $channel_name ) = @_;
 
