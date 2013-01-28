@@ -64,6 +64,16 @@ ok $mirth->login, 'Login with good credentials';
 }
 
 {
+    my $code_templates = $mirth->get_code_templates;
+
+    my $content = $code_templates->get_content;
+    is_xml(
+        $content, _get_code_templates_fixture(),
+        "XML received for code templates is correct"
+    );
+}
+
+{
     my $channel;
 
     warning_like
@@ -177,6 +187,15 @@ sub _get_global_scripts_fixture {
     return $global_scripts_xml;
 }
 
+sub _get_code_templates_fixture {
+    my $code_templates = $t_lib_dir->file("code_templates.xml");
+
+    my @lines = $code_templates->slurp;
+    my $code_templates_xml = join '', @lines;
+
+    return $code_templates_xml;
+}
+
 sub _get_channel_exported {
     my ($args)         = @_;
     my $channel_to_get = $args->{channel};
@@ -285,6 +304,15 @@ sub _get_httpd {
             else {
                 $response = [ 500, [], [] ];
             }
+        }
+        elsif ( $params->{op} eq 'getCodeTemplate' ) {
+            my $code_templates_xml = _get_code_templates_fixture();
+
+            $response = [
+                200,
+                [ 'Content-Type' => 'application/xml' ],
+                [ $code_templates_xml ]
+            ];
         }
         elsif ( $params->{op} eq 'getGlobalScripts' ) {
             my $global_scripts_xml = _get_global_scripts_fixture();

@@ -15,6 +15,7 @@ use Path::Class ();
 use Log::Minimal qw( debugf warnf croakff );
 
 use aliased 'WebService::Mirth::GlobalScripts' => 'GlobalScripts', ();
+use aliased 'WebService::Mirth::CodeTemplates' => 'CodeTemplates', ();
 use aliased 'WebService::Mirth::Channel'       => 'Channel',       ();
 
 =begin comment
@@ -97,6 +98,41 @@ has _ua => (
     lazy    => 1,
     default => sub { Mojo::UserAgent->new },
 );
+
+has code_templates_dom => (
+    is         => 'ro',
+    isa        => 'Mojo::DOM',
+    lazy_build => 1,
+);
+
+sub _build_code_templates_dom {
+    my ($self) = @_;
+
+    my $url = $self->base_url->clone->path('/codetemplates');
+
+    my $tx = $self->_ua->post_form( $url,
+        {   op           => 'getCodeTemplate',
+            codeTemplate => '<null/>',
+        }
+    );
+
+    # (Content-Type will probably be application/xml;charset=UTF-8)
+    if ( my $response = $tx->success ) {
+        # XXX Hack: Append XML declaration to ensure that XML semantics
+        # are turned on when the Mojo::DOM object is created (via
+        # Mojo::Message::dom())
+        my $body = $response->body;
+        $body = qq{<?xml version="1.0"?>\n$body};
+        $response->body($body);
+
+        my $code_templates_dom = $response->dom;
+
+        return $code_templates_dom;
+    }
+    else {
+        _handle_tx_error( [ $tx->error ] );
+    }
+}
 
 has global_scripts_dom => (
     is         => 'ro',
@@ -262,6 +298,16 @@ sub export_global_scripts {
         $output_file->stringify
     );
     $output_file->spew($content);
+}
+
+sub get_code_templates {
+    my ($self) = @_;
+
+    my $code_templates = CodeTemplates->new({
+        code_templates_dom => $self->code_templates_dom
+    });
+
+    return $code_templates;
 }
 
 sub get_channel {
