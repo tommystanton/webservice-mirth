@@ -93,6 +93,7 @@ ok $mirth->login, 'Login with good credentials';
 
     is $channel->name, $name, 'Parsed name is correct';
     is $channel->id,   $id,   'Parsed ID is correct';
+    is $channel->enabled, 'true', 'Parsed enabled is correct';
 
     my $content = $channel->get_content;
     is_xml(
