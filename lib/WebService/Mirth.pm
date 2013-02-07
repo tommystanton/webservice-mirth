@@ -125,7 +125,7 @@ sub _build_code_templates_dom {
         return $code_templates_dom;
     }
     else {
-        _handle_tx_error( [ $tx->error ] );
+        $self->_handle_tx_error( [ $tx->error ] );
     }
 }
 
@@ -151,7 +151,7 @@ sub _build_global_scripts_dom {
         return $global_scripts_dom;
     }
     else {
-        _handle_tx_error( [ $tx->error ] );
+        $self->_handle_tx_error( [ $tx->error ] );
     }
 }
 
@@ -181,7 +181,7 @@ sub _build_channels_dom {
         return $channels_dom;
     }
     else {
-        _handle_tx_error( [ $tx->error ] );
+        $self->_handle_tx_error( [ $tx->error ] );
     }
 }
 
@@ -248,7 +248,7 @@ Mirth Connect version 2.2.1.5861 will return:
     if ( my $response = $tx->success ) {
     }
     else {
-        _handle_tx_error( [ $tx->error ] );
+        $self->_handle_tx_error( [ $tx->error ] );
     }
 
     $tx->success ? return 1 : return 0;
@@ -401,13 +401,14 @@ sub logout {
     if ( my $response = $tx->success ) {
     }
     else {
-        _handle_tx_error( [ $tx->error ] );
+        $self->_handle_tx_error( [ $tx->error ] );
     }
 
     $tx->success ? return 1 : return 0;
 }
 
 sub _handle_tx_error {
+    my $self = shift;
     my ( $message, $code ) = @{ $_[0] };
 
     if ( defined $code ) {
@@ -418,11 +419,12 @@ sub _handle_tx_error {
         );
     }
     else {
+        my ( $server, $port ) = map { $self->$_ } qw( server port );
         croakff(
             'HTTP transaction failed%s',
                 $message =~ /SSL connect attempt failed/
-              ? '.  Maybe the server or port is incorrect?'
-              : ''
+              ? ": cannot reach $server at port $port."
+              : ""
         );
     }
 }
