@@ -410,11 +410,21 @@ sub logout {
 sub _handle_tx_error {
     my ( $message, $code ) = @{ $_[0] };
 
-    croakff(
-        'Failed with HTTP code %s: %s',
-        $code || 'N/A',
-        $message
-    );
+    if ( defined $code ) {
+        croakff(
+            'Failed with HTTP code %s: %s',
+            $code,
+            $message
+        );
+    }
+    else {
+        croakff(
+            'HTTP transaction failed%s',
+                $message =~ /SSL connect attempt failed/
+              ? '.  Maybe the server or port is incorrect?'
+              : ''
+        );
+    }
 }
 
 sub _fix_response_body_xml {
