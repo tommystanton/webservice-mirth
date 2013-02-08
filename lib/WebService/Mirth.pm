@@ -2,6 +2,12 @@ package WebService::Mirth;
 
 # ABSTRACT: Interact with a Mirth Connect server via REST
 
+=head1 NAME
+
+WebService::Mirth - Interact with a Mirth Connect server via REST
+
+=cut
+
 use Moose;
 use namespace::autoclean;
 
@@ -17,6 +23,59 @@ use Log::Minimal qw( debugf warnf croakff );
 use aliased 'WebService::Mirth::GlobalScripts' => 'GlobalScripts', ();
 use aliased 'WebService::Mirth::CodeTemplates' => 'CodeTemplates', ();
 use aliased 'WebService::Mirth::Channel'       => 'Channel',       ();
+
+=head1 SYNOPSIS
+
+    my $mirth = WebService::Mirth->new(
+        server   => 'mirth.example.com',
+        port     => 8443,
+        username => 'admin',
+        password => 'password',
+    );
+
+    $mirth->login;
+
+    $mirth->export_channels({
+        to_dir => 'path/to/export/'
+    });
+
+    $mirth->export_global_scripts({
+        to_dir => 'path/to/export/'
+    });
+
+    $mirth->export_code_templates({
+        to_dir => 'path/to/export/'
+    });
+
+    $mirth->logout;
+
+=head1 DESCRIPTION
+
+Mirth Connect is an open-source Java-powered application used for
+healthcare integration.  Incoming HL7 or XML feeds containing electronic
+medical records can be parsed and then handled (munged, stored, sent
+off, etc) by Mirth Connect.
+
+This module provides a pure-Perl means of RESTful interaction with a
+Mirth Connect server (referred to as "Mirth" going forward).  The
+functionality is similar to what the "Mirth Shell" program provides
+within a Mirth installation.
+
+Parser code living in Mirth can be exported as XML files locally, for
+off-site archival.
+
+L<Mojo::DOM> objects in some of the L</ATTRIBUTES> could be used for
+inspecting or altering the channels locally (ie. turn a channel off by
+changing the "enabled" node from "true" to "false").
+
+All internal HTTP interactions are performed via L<Mojo::UserAgent>, so
+the C<MOJO_USERAGENT_DEBUG> environment variable can be set to 1 to turn
+on HTTP debugging.
+
+L<Log::Minimal> is used for application logging, so the C<LM_DEBUG>
+environment variable can be set to 1 for additional debugging.
+
+=cut
 
 =begin comment
 
@@ -41,11 +100,26 @@ http://www.mirthcorp.com/community/wiki/display/mirthuserguidev1r8p0/Mirth+Shell
 
 =cut
 
+=head1 ATTRIBUTES
+
+=head2 server
+
+A string containing the FQDN (see L</CAVEATS>) of the Mirth server to
+connect to.
+
+=cut
+
 has server => (
     is       => 'ro',
     isa      => 'Str',
     required => 1,
 );
+
+=head2 port
+
+The Jetty port that Mirth is listening on for HTTP.
+
+=cut
 
 # "Administrator Port"
 has port => (
@@ -55,6 +129,15 @@ has port => (
     #default  => 8443,
 );
 
+=head2 version
+
+A string containing the version of Mirth that the L</server> is hosting.
+This value is required by Mirth for HTTP interaction.
+
+Defaults to "0.0.0", which should be sufficient.
+
+=cut
+
 has version => (
     is       => 'ro',
     isa      => 'Str',
@@ -62,17 +145,40 @@ has version => (
     required => 1,
 );
 
+=head2 username
+
+The name of the user to connect with.  "admin" is likely a good choice:
+full administrative privileges are ideal.
+
+=cut
+
 has username => (
     is       => 'ro',
     isa      => 'Str',
     required => 1,
 );
 
+=head2 password
+
+The corresponding password for the L</username> being used.
+
+=cut
+
 has password => (
     is       => 'ro',
     isa      => 'Str',
     required => 1,
 );
+
+=head2 base_url
+
+A L<Mojo::URL> object that represents the HTTP address of the Mirth
+server.  The RESTful HTTP requests will be made based on this URL.
+
+Mirth uses HTTPS, so it will be constructed into something like
+C<https://mirth.example.com:8443>.
+
+=cut
 
 has base_url => (
     is         => 'ro',
@@ -98,6 +204,14 @@ has _ua => (
     lazy    => 1,
     default => sub { Mojo::UserAgent->new },
 );
+
+=head2 code_templates_dom
+
+A L<Mojo::DOM> object of the XML representing the "Code Templates" in
+Mirth.  Used by L</get_code_templates> to create a
+L<WebService::Mirth::CodeTemplates> object.
+
+=cut
 
 has code_templates_dom => (
     is         => 'ro',
@@ -129,6 +243,14 @@ sub _build_code_templates_dom {
     }
 }
 
+=head2 global_scripts_dom
+
+A L<Mojo::DOM> object of the XML representing the "Global Scripts" in
+Mirth.  Used by L</get_global_scripts> to create a
+L<WebService::Mirth::GlobalScripts> object.
+
+=cut
+
 has global_scripts_dom => (
     is         => 'ro',
     isa        => 'Mojo::DOM',
@@ -154,6 +276,16 @@ sub _build_global_scripts_dom {
         $self->_handle_tx_error( [ $tx->error ] );
     }
 }
+
+=head2 channels_dom
+
+A L<Mojo::DOM> object of the XML representing all of the channels in
+Mirth.  Massaged by L</get_channel> to return a
+L<WebService::Mirth::Channel> object.
+
+Also used in the construction of L</channel_list>.
+
+=cut
 
 has channels_dom => (
     is         => 'ro',
@@ -185,6 +317,13 @@ sub _build_channels_dom {
     }
 }
 
+=head2 channel_list
+
+Contains a hashref representing all of the channels in Mirth.  The key
+is a channel name and the value is the corresponding channel ID.
+
+=cut
+
 has channel_list => (
     is         => 'ro',
     isa        => 'HashRef',
@@ -209,6 +348,18 @@ sub _build_channel_list {
 
     return \%channel_list;
 }
+
+=head1 METHODS
+
+=head2 login
+
+    $mirth->login;
+
+Login as L</username> at the C</users> URI, via an HTTP POST.  If
+authentication is successful, starts a session that persists until
+L</logout> is called.
+
+=cut
 
 sub login {
     my ($self) = @_;
@@ -254,6 +405,15 @@ Mirth Connect version 2.2.1.5861 will return:
     $tx->success ? return 1 : return 0;
 }
 
+=head2 get_global_scripts
+
+    $global_scripts = $mirth->get_global_scripts;
+
+Returns a L<WebService::Mirth::GlobalScripts> object of the "Global
+Scripts" in Mirth.
+
+=cut
+
 sub get_global_scripts {
     my ($self) = @_;
 
@@ -263,6 +423,17 @@ sub get_global_scripts {
 
     return $global_scripts;
 }
+
+=head2 export_global_scripts
+
+    $mirth->export_global_scripts({
+        to_dir => 'path/to/export/'
+    });
+
+Given a path to a directory in the C<to_dir> parameter, writes an XML
+file named C<global_scripts.xml> to the directory.
+
+=cut
 
 sub export_global_scripts {
     my $self = shift;
@@ -285,6 +456,15 @@ sub export_global_scripts {
     $output_file->spew($content);
 }
 
+=head2 get_code_templates
+
+    $code_templates = $mirth->get_code_templates;
+
+Returns a L<WebService::Mirth::CodeTemplates> object of the "Code
+Templates" in Mirth.
+
+=cut
+
 sub get_code_templates {
     my ($self) = @_;
 
@@ -294,6 +474,17 @@ sub get_code_templates {
 
     return $code_templates;
 }
+
+=head2 export_code_templates
+
+    $mirth->export_code_templates({
+        to_dir => 'path/to/export/'
+    });
+
+Given a path to a directory in the C<to_dir> parameter, writes an XML
+file named C<code_templates.xml> to the directory.
+
+=cut
 
 sub export_code_templates {
     my $self = shift;
@@ -315,6 +506,18 @@ sub export_code_templates {
     );
     $output_file->spew($content);
 }
+
+=head2 get_channel
+
+    $channel = $mirth->get_channel('foobar');
+    print $channel->name, "\n";    # "foobar"
+    print $channel->id, "\n";      # "a25ea24c-d8f4-439a-9063-62f8a2b6a4b1"
+    print $channel->enabled, "\n"; # "true"
+
+Given the name of a channel in Mirth, returns a
+L<WebService::Mirth::Channel> object.
+
+=cut
 
 sub get_channel {
     my ( $self, $channel_name ) = @_;
@@ -367,6 +570,17 @@ containing "quux", then get its parent (the channel node):
     return $channel_dom;
 }
 
+=head2 export_channels
+
+    $mirth->export_code_templates({
+        to_dir => 'path/to/export/'
+    });
+
+Given a path to a directory in the C<to_dir> parameter, writes XML files
+(with names like C<my_channel.xml>) to the directory.
+
+=cut
+
 sub export_channels {
     my $self = shift;
     my ($output_dir) = validated_list(
@@ -390,6 +604,14 @@ sub export_channels {
     }
 }
 
+=head2 logout
+
+    $mirth->logout;
+
+Ends the session initiated by L</login>.
+
+=cut
+
 sub logout {
     my ($self) = @_;
 
@@ -406,6 +628,31 @@ sub logout {
 
     $tx->success ? return 1 : return 0;
 }
+
+=head1 TODO
+
+=over
+
+=item Call L</login> and L</logout> methods automatically as needed
+(using the constructor and destructor)
+
+=item Add feature to put channels onto a Mirth box
+
+=back
+
+=head1 CAVEATS
+
+=head2 Server specification and session cookies
+
+It seems that an FQDN (fully-qualified domain name) is required for
+L</server> in order for the session started by L</login> (involving
+cookies) to stick.
+
+For example, an IP address for L</server> is not sufficient.  A
+workaround could be adding an entry to C</etc/hosts> with something like
+"mirth.localhost" (in which case, see hosts(1)).
+
+=cut
 
 sub _handle_tx_error {
     my $self = shift;
@@ -439,6 +686,22 @@ sub _fix_response_body_xml {
     $body = qq{<?xml version="1.0"?>\n$body};
     $response->body($body);
 }
+
+=head1 SEE ALSO
+
+=over
+
+=item L<http://www.mirthcorp.com/products/mirth-connect>
+
+=item L<http://www.mirthcorp.com/community/wiki/display/mirthuserguidev1r8p0/Introduction>
+
+=item L<http://www.mirthcorp.com/community/wiki/display/mirthuserguidev1r8p0/Mirth+Shell>
+
+=item L<Mojo::DOM>
+
+=back
+
+=cut
 
 __PACKAGE__->meta->make_immutable;
 
