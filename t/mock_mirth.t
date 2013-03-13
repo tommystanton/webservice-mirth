@@ -30,28 +30,34 @@ use_ok($class);
 my ( $server, $port ) = split /:/, $httpd->host_port;
 
 {
-    my $mirth = $class->new(
-        server   => $server,
-        port     => $port,
-        username => 'admin',
-        password => 'incorrect',
-    );
-
     like(
-        exception { $mirth->login; },
+        exception {
+            my $mirth = $class->new(
+                server   => $server,
+                port     => $port,
+                username => 'admin',
+                password => 'incorrect',
+            );
+        },
         qr/failed.*?HTTP.*?500/i,
-        'Login with bad credentials causes exception'
+        'Login (upon construction) with bad credentials causes exception'
     );
 }
 
-my $mirth = $class->new(
-    server   => $server, # XXX FQDN needed for cookies to work
-    port     => $port,
-    username => 'admin',
-    password => 'admin',
-);
+my $mirth;
 
-ok $mirth->login, 'Login with good credentials';
+is(
+    exception {
+        $mirth = $class->new(
+            server   => $server, # XXX FQDN needed for cookies to work
+            port     => $port,
+            username => 'admin',
+            password => 'admin',
+        );
+    },
+    undef,
+    'Login (upon construction) with good credentials'
+);
 
 {
     my $global_scripts = $mirth->get_global_scripts;
@@ -183,7 +189,7 @@ ok $mirth->login, 'Login with good credentials';
     }
 }
 
-ok $mirth->logout, 'Logout';
+is( exception { undef $mirth }, undef, 'Logout (upon destruction)' );
 
 sub _get_global_scripts_exported {
     my ($args) = @_;

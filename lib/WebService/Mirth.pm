@@ -33,8 +33,6 @@ use aliased 'WebService::Mirth::Channel'       => 'Channel',       ();
         password => 'password',
     );
 
-    $mirth->login;
-
     $mirth->export_channels({
         to_dir => 'path/to/export/'
     });
@@ -46,8 +44,6 @@ use aliased 'WebService::Mirth::Channel'       => 'Channel',       ();
     $mirth->export_code_templates({
         to_dir => 'path/to/export/'
     });
-
-    $mirth->logout;
 
 =head1 DESCRIPTION
 
@@ -67,6 +63,9 @@ off-site archival.
 L<Mojo::DOM> objects in some of the L</ATTRIBUTES> could be used for
 inspecting or altering the channels locally (ie. turn a channel off by
 changing the "enabled" node from "true" to "false").
+
+The L</login> and L</logout> methods will automatically be called as
+needed.
 
 All internal HTTP interactions are performed via L<Mojo::UserAgent>, so
 the C<MOJO_USERAGENT_DEBUG> environment variable can be set to 1 to turn
@@ -349,6 +348,18 @@ sub _build_channel_list {
     return \%channel_list;
 }
 
+sub BUILD {
+    my ($self) = @_;
+
+    $self->login;
+}
+
+sub DEMOLISH {
+    my ($self) = @_;
+
+    $self->logout;
+}
+
 =head1 METHODS
 
 =head2 login
@@ -358,6 +369,8 @@ sub _build_channel_list {
 Login as L</username> at the C</users> URI, via an HTTP POST.  If
 authentication is successful, starts a session that persists until
 L</logout> is called.
+
+This method is automatically called upon object construction.
 
 =cut
 
@@ -610,6 +623,8 @@ sub export_channels {
 
 Ends the session initiated by L</login>.
 
+This method is automatically called upon object destruction.
+
 =cut
 
 sub logout {
@@ -632,9 +647,6 @@ sub logout {
 =head1 TODO
 
 =over
-
-=item Call L</login> and L</logout> methods automatically as needed
-(using the constructor and destructor)
 
 =item Add feature to put channels onto a Mirth box
 
