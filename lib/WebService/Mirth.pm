@@ -680,10 +680,11 @@ sub _handle_tx_error {
     else {
         my ( $server, $port ) = map { $self->$_ } qw( server port );
         croakff(
-            'HTTP transaction failed%s',
-                $message =~ /SSL connect attempt failed/
-              ? ": cannot reach $server at port $port."
-              : ""
+            'HTTP transaction failed: %s',
+                $message =~
+                    /(Couldn't connect)|(SSL connect attempt failed)/
+              ? "cannot reach $server at port $port."
+              : $message
         );
     }
 }
