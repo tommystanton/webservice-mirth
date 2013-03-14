@@ -585,7 +585,7 @@ containing "quux", then get its parent (the channel node):
 
 =head2 export_channels
 
-    $mirth->export_code_templates({
+    $mirth->export_channels({
         to_dir => 'path/to/export/'
     });
 
