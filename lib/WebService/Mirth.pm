@@ -34,15 +34,15 @@ use aliased 'WebService::Mirth::Channel'       => 'Channel',       ();
     );
 
     $mirth->export_channels({
-        to_dir => 'path/to/export/'
+        to_dir => 'path/to/export/to/'
     });
 
     $mirth->export_global_scripts({
-        to_dir => 'path/to/export/'
+        to_dir => 'path/to/export/to/'
     });
 
     $mirth->export_code_templates({
-        to_dir => 'path/to/export/'
+        to_dir => 'path/to/export/to/'
     });
 
 =head1 DESCRIPTION
@@ -440,7 +440,7 @@ sub get_global_scripts {
 =head2 export_global_scripts
 
     $mirth->export_global_scripts({
-        to_dir => 'path/to/export/'
+        to_dir => 'path/to/export/to/'
     });
 
 Given a path to a directory in the C<to_dir> parameter, writes an XML
@@ -491,7 +491,7 @@ sub get_code_templates {
 =head2 export_code_templates
 
     $mirth->export_code_templates({
-        to_dir => 'path/to/export/'
+        to_dir => 'path/to/export/to/'
     });
 
 Given a path to a directory in the C<to_dir> parameter, writes an XML
@@ -586,7 +586,7 @@ containing "quux", then get its parent (the channel node):
 =head2 export_channels
 
     $mirth->export_channels({
-        to_dir => 'path/to/export/'
+        to_dir => 'path/to/export/to/'
     });
 
 Given a path to a directory in the C<to_dir> parameter, writes XML files
