@@ -710,6 +710,13 @@ sub _fix_response_body_xml {
 
 =cut
 
+=head1 ACKNOWLEDGEMENTS
+
+Thanks to the Informatics Corporation of America (ICA) for sponsoring the
+development of this module.
+
+=cut
+
 __PACKAGE__->meta->make_immutable;
 
 1;
