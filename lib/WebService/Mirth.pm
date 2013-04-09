@@ -2,12 +2,6 @@ package WebService::Mirth;
 
 # ABSTRACT: Interact with a Mirth Connect server via REST
 
-=head1 NAME
-
-WebService::Mirth - Interact with a Mirth Connect server via REST
-
-=cut
-
 use Moose;
 use namespace::autoclean;
 
