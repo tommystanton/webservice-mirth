@@ -2,6 +2,6 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
-  * 
+  * Initial release
 
 vim: syntax=:softtabstop=2:shiftwidth=2
