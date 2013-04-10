@@ -201,8 +201,7 @@ sub _get_global_scripts_exported {
     $export_dir = Path::Class::Dir->new($export_dir);
     my $global_scripts = $export_dir->file('global_scripts.xml');
 
-    my @lines = $global_scripts->slurp;
-    my $global_scripts_xml = join '', @lines;
+    my $global_scripts_xml = $global_scripts->slurp;
 
     return $global_scripts_xml;
 }
@@ -210,8 +209,7 @@ sub _get_global_scripts_exported {
 sub _get_global_scripts_fixture {
     my $global_scripts = $t_lib_dir->file("global_scripts.xml");
 
-    my @lines = $global_scripts->slurp;
-    my $global_scripts_xml = join '', @lines;
+    my $global_scripts_xml = $global_scripts->slurp;
 
     return $global_scripts_xml;
 }
@@ -223,8 +221,7 @@ sub _get_code_templates_exported {
     $export_dir = Path::Class::Dir->new($export_dir);
     my $code_templates = $export_dir->file('code_templates.xml');
 
-    my @lines = $code_templates->slurp;
-    my $code_templates_xml = join '', @lines;
+    my $code_templates_xml = $code_templates->slurp;
 
     return $code_templates_xml;
 }
@@ -232,8 +229,7 @@ sub _get_code_templates_exported {
 sub _get_code_templates_fixture {
     my $code_templates = $t_lib_dir->file("code_templates.xml");
 
-    my @lines = $code_templates->slurp;
-    my $code_templates_xml = join '', @lines;
+    my $code_templates_xml = $code_templates->slurp;
 
     return $code_templates_xml;
 }
@@ -246,8 +242,7 @@ sub _get_channel_exported {
     $export_dir = Path::Class::Dir->new($export_dir);
     my $channel = $export_dir->file("${channel_to_get}.xml");
 
-    my @lines = $channel->slurp;
-    my $channel_xml = join '', @lines;
+    my $channel_xml = $channel->slurp;
 
     return $channel_xml;
 }
@@ -258,8 +253,7 @@ sub _get_channel_fixture {
     my $channels_dir = $t_lib_dir->subdir('channels');
     my $channel      = $channels_dir->file("${channel_to_get}.xml");
 
-    my @lines = $channel->slurp;
-    my $channel_xml = join '', @lines;
+    my $channel_xml = $channel->slurp;
 
     return $channel_xml;
 }
