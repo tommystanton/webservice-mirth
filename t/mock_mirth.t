@@ -87,7 +87,10 @@ is(
         qr/does not exist/,
         'Got warning about invalid channel not existing';
 
-    ok( ! defined $channel, 'undef returned for invalid channel' );
+    ok(
+        ( not defined $channel ),
+        'undef returned for invalid channel'
+    );
 }
 
 {
