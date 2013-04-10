@@ -49,7 +49,7 @@ my $mirth;
 is(
     exception {
         $mirth = $class->new(
-            server   => $server, # XXX FQDN needed for cookies to work
+            server   => $server,
             port     => $port,
             username => 'admin',
             password => 'admin',
