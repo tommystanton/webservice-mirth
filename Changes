@@ -2,6 +2,8 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.131000  2013-04-09 22:44:08 America/Chicago
+
   * Initial release
 
 vim: syntax=:softtabstop=2:shiftwidth=2
