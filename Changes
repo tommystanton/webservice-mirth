@@ -2,6 +2,8 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+  * Update "resources" metadata for distribution to GitHub URIs
+
 0.131000  2013-04-09 22:44:08 America/Chicago
 
   * Initial release
