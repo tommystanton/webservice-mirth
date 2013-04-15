@@ -5,7 +5,6 @@ use warnings;
 
 use Test::More;
 use Test::XML;
-use Test::Warn;
 use Test::Fatal;
 use Test::Deep;
 use Test::File;
@@ -76,20 +75,6 @@ is(
     is_xml(
         $content, _get_code_templates_fixture(),
         "XML received for code templates is correct"
-    );
-}
-
-{
-    my $channel;
-
-    warning_like
-        { $channel = $mirth->get_channel('baz'); }
-        qr/does not exist/,
-        'Got warning about invalid channel not existing';
-
-    ok(
-        ( not defined $channel ),
-        'undef returned for invalid channel'
     );
 }
 
