@@ -2,6 +2,10 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+  * Mojolicious requires IO::Socket::SSL version 1.75 or greater for TLS
+    support, so have this distribution adhere to that (resolves GitHub
+    issue #2)
+
 0.131050  2013-04-14 19:19:56 America/Chicago
 
   * Remove minor warning test that was failing (resolves GitHub issue
