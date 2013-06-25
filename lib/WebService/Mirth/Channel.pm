@@ -29,6 +29,7 @@ has id => (
     default => sub { $_[0]->channel_dom->at('id')->text },
 );
 
+# TODO Use MooseX::RemoteHelper?  This is actually a Bool.
 has enabled => (
     is      => 'rw',
     isa     => enum( [qw( true false )] ),
